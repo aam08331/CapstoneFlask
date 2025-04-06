@@ -82,7 +82,7 @@ def run_scrape_job(job_id):
 
         # Path to your ChromeDriver
         from selenium.webdriver.chrome.service import Service
-        driver = webdriver.Remote(command_executor="http://10.250.30.216:4444", options=chrome_options)
+        driver = webdriver.Remote(command_executor="https://flask-production-4c6f.up.railway.app/", options=chrome_options)
 
         # Open the login page
         driver.get("https://iot.achtbytes.com/copc/tenant")
