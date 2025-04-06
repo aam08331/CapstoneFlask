@@ -4,3 +4,4 @@ pandas
 requests
 flask_mail
 APScheduler
+xhtml2pdf
