@@ -82,7 +82,6 @@ def run_scrape_job(job_id):
 
         # Path to your ChromeDriver
         from selenium.webdriver.chrome.service import Service
-        chrome_options = get_default_chrome_options()
         driver = webdriver.Remote(command_executor="https://standalone-chrome-production-fc7a.up.railway.app/:4444", options=chrome_options)
 
         # Open the login page
