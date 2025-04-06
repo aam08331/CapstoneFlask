@@ -82,7 +82,8 @@ def run_scrape_job(job_id):
 
         # Path to your ChromeDriver
         from selenium.webdriver.chrome.service import Service
-        driver = webdriver.Remote(URL="https://standalone-chrome-production-fc7a.up.railway.app/", options=chrome_options)
+        service = Service("/usr/local/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=chrome_options)
 
         # Open the login page
         driver.get("https://iot.achtbytes.com/copc/tenant")
