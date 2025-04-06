@@ -82,7 +82,7 @@ def run_scrape_job(job_id):
 
         # Path to your ChromeDriver
         from selenium.webdriver.chrome.service import Service
-        service = Service("/usr/local/bin/chromedriver")
+        service = Service("https://standalone-chrome-production-fc7a.up.railway.app/")
         driver = webdriver.Chrome(service=service, options=chrome_options)
 
         # Open the login page
