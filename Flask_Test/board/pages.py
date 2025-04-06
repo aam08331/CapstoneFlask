@@ -9,8 +9,8 @@ from flask_mail import Message
 from board.mail import mail
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-#from board import app
 from flask import current_app
+from xhtml2pdf import pisa
 
 bp = Blueprint("pages", __name__)
 
@@ -223,7 +223,7 @@ def subscribe():
             if(not job):
                 scheduler.add_job(
                         sendWeeklyUpdate, 
-                        trigger=CronTrigger(day_of_week='sun', hour=6, minute=36),
+                        trigger=CronTrigger(day_of_week='mon', hour=13, minute=00),
                         args=[current_app._get_current_object(), email],
                         max_instances=1  
                 )
@@ -247,6 +247,158 @@ def sendWeeklyUpdate(app, email):
         msg = Message(subject=subject, sender="capstonetestingtester@gmail.com", recipients=[email])
         msg.body = body
 
+        html_content = """
+        <html>
+            <head>
+                <title>PDF Generation with xhtml2pdf</title>
+                <style>
+                    body {
+                    font-family: 'Merriweather', sans-serif;
+                    font-size: 20px;
+                    margin: 0 auto;
+                    text-align: center;
+                    display: flex;
+                    height: 100vh;
+                    color: var(--primary-black);
+                        }
+                .carbon-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .carbon-left,
+        .carbon-right {
+            flex: 1 1 300px;
+        }
+
+        .carbon-section-title {
+            color: var(--primary-red);
+        }
+
+        .carbon-section  {
+            line-height: 36px;
+        }
+
+        .no-bullets {
+            list-style-type: none;
+        padding-left: 0;
+        margin-left: 0;
+        }
+
+        
+        .chart-placeholder {
+            width: 100%;
+            height: 300px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .formula {
+            font-weight: bold;
+        }
+
+        .equivalent-section {
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .equivalent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+        
+        .equiv-box {
+            border: 2px solid var(--primary-black);
+            padding: 20px 10px;
+            transition: transform 0.2s ease;
+            line-height: 33px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px; 
+        }
+        
+        .equiv-box:hover {
+            transform: translateY(-5px);
+        }
+        
+        .equiv-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-red);
+            margin-bottom: 10px;
+            font-family: 'Oswald', sans-serif;
+        }
+        
+        .equiv-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .equiv-desc {
+            font-size: 13px;
+            color: var(--primary-black);
+        }
+        
+        
+        @media (max-width: 768px) {
+            .carbon-container {
+            flex-direction: column;
+            }
+        }
+                </style>
+            </head>
+            <body>
+                <div class="carbon-right">
+            <section class="carbon-section">
+            <h3 class="carbon-section-title">What is this equivalent to?</h3>
+            <section class="equivalent-section">
+            
+                <div class="equivalent-grid">
+                <div class="equiv-box">
+                
+                    <div class="equiv-number">XX</div>
+                    
+                    <div class="equiv-desc">Cars on the road</div>
+                </div>
+            
+                <div class="equiv-box">
+                    <div class="equiv-number">XX</div>
+                    
+                    <div class="equiv-desc">Trees needed to offset</div>
+                </div>
+            
+                <div class="equiv-box">
+                    <div class="equiv-number">XX</div>
+                    
+                    <div class="equiv-desc">Balloons filled with CO₂</div>
+                </div>
+            
+                <div class="equiv-box">
+                    <div class="equiv-number">XX</div>
+                    
+                    <div class="equiv-desc">Showers taken</div>
+                </div>
+                </div>
+            </section>
+            </section>
+            </body>
+        </html>
+        """
+        def convert_html_to_pdf(html, output_path):
+            with open(output_path, "w+b") as output_file:
+                pisa.CreatePDF(html, dest=output_file)
+
+        convert_html_to_pdf(html_content, "./output.pdf")
+
+        with app.open_resource("../output.pdf") as re:
+            msg.attach("output.pdf", "application/pdf", re.read())
+
         try:
             mail.send(msg)
             print("Weekly update sent")
@@ -267,7 +419,7 @@ def fetch_data():
 @bp.route('/send-data', methods=['POST'])
 def send_data():
     url = "https://testapi.io/api/aam08331/Testapi"
-    data = {"name": "John", "age": 30}
+    data = {"test": "test", "num": 1}
 
     try:
         response = requests.post(url, json=data, timeout=5)
