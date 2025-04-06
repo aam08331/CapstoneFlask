@@ -1,0 +1,6 @@
+Flask
+selenium
+pandas
+requests
+flask_mail
+APScheduler
