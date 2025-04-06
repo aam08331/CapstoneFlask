@@ -223,7 +223,7 @@ def subscribe():
             if(not job):
                 scheduler.add_job(
                         sendWeeklyUpdate, 
-                        trigger=CronTrigger(day_of_week='sun', hour=2, minute=10),
+                        trigger=CronTrigger(day_of_week='sun', hour=2, minute=18),
                         args=[current_app._get_current_object(), email],
                         max_instances=1  
                 )
