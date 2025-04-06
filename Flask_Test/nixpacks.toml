@@ -1,0 +1,6 @@
+providers = ["python"]
+
+[start]
+cmd = "source venv/bin/activate"
+cmd = "cd board"
+cmd = "python -m flask --app board run"
