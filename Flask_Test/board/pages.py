@@ -83,7 +83,7 @@ def run_scrape_job(job_id):
         # Path to your ChromeDriver
         from selenium.webdriver.chrome.service import Service
         service = Service("/usr/local/bin/chromedriver")
-        driver = webdriver.Chrome(options=chrome_options)
+        driver = webdriver.Chrome(options=chrome_options, service_log_path='../')
 
         # Open the login page
         driver.get("https://iot.achtbytes.com/copc/tenant")
