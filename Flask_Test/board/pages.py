@@ -64,7 +64,6 @@ def run_scrape_job(job_id):
         from selenium.webdriver.common.keys import Keys
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         import pandas as pd
 
         # AchtBytes Login Credentials (REPLACE THESE)
@@ -83,7 +82,7 @@ def run_scrape_job(job_id):
 
         # Path to your ChromeDriver
         from selenium.webdriver.chrome.service import Service
-        driver = webdriver.Remote(command_executor="https://standalone-chrome-production-fc7a.up.railway.app/", desired_capabilities=DesiredCapabilities.CHROME)
+        driver = webdriver.Remote(url="https://standalone-chrome-production-fc7a.up.railway.app/", options=chrome_options)
 
         # Open the login page
         driver.get("https://iot.achtbytes.com/copc/tenant")
