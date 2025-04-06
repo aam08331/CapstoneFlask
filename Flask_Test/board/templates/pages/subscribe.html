@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Subscribe{% endblock %}
+
+{% block header %}
+  <h2 class="header">
+    <span class="red-text">Subscribe</span> for weekly reports
+  </h2>
+{% endblock header %}
+
+{% block content %}
+  <hr>
+
+  <div class="subscribe-container">
+    <div class="subscribe-text">
+      <h2 style="margin-top: 0;">
+        <span class="red-text">Insights</span> Delivered Weekly
+      </h2>
+      <p>
+        Stay updated on carbon emissions and traffic sensor data with a quick report.
+        <br><br>
+        Our report is sent out every Monday.
+      </p>
+    </div>
+
+    <div class="subscribe-form-box">
+      <form method="post" action="{{ url_for('pages.subscribe') }}" class="subscribe-form">
+        <div class="form-group">
+          <label for="first_name" class="form-label">First Name</label>
+          <input type="text" name="first_name" id="first_name" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label for="last_name" class="form-label">Last Name</label>
+          <input type="text" name="last_name" id="last_name" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <input type="email" name="email" id="email" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <button type="submit" class="subscribe-button">Subscribe</button>
+        </div>
+      </form>
+
+      {% if success %}
+        <p class="form-message success">{{ success }}</p>
+      {% elif error %}
+        <p class="form-message error">{{ error }}</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock content %}
+

@@ -1,0 +1,20 @@
+<nav>
+  <div class="nav-top">
+    <img src="{{ url_for('static', filename='images/stego-logo.svg') }}" alt="STEGO logo" class="nav-logo">
+
+  
+
+    <!-- Collapsible nav list -->
+    <ul class="nav-list" id="mobile-nav">
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.home') }}">Home</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.about') }}">About</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.dashboard') }}">Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.carbon_emissions') }}">Carbon Emissions</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.subscribe') }}">Subscribe</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-footer">2024–2025 UGA Capstone</div>
+</nav>
+
+

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+{% block header %}
+  <h1 class = "header"><span class="red-text">Cloud-based Monitoring System</span> <br> for Traffic Control in Peachtree Corners</h1>
+{% endblock header %}
+
+{% block content %}
+  <hr>
+  <p class="home-body">
+    The dashboard provides real-time traffic updates for STEGO NA and the City of Peachtree Corners with interactive charts and live sensor data. 
+    Users can track key metrics, spot trends, and subscribe to weekly updates.
+  </p>
+
+
+  <hr>
+  
+  <h2 class="home-features">KEY FEATURES</h2>
+
+  <div class="home-3-block">
+    <a class="home-block-item" href="{{ url_for('pages.dashboard') }}">
+      <img src="{{ url_for('static', filename='images/dashboard.svg') }}" alt="dashboard svg">
+      <h3>DASHBOARD</h3>
+      <p>View real-time data and insights</p>
+    </a>
+    <a class="home-block-item" href="{{ url_for('pages.carbon_emissions') }}">
+      <img src="{{ url_for('static', filename='images/carbon.svg') }}" alt="carbon svg">
+      <h3>ESTIMATE CARBON EMISSIONS</h3>
+      <p>Measure emissions based on the sensor data</p>
+    </a>
+    <a class="home-block-item" href="{{ url_for('pages.subscribe') }}">
+      <img src="{{ url_for('static', filename='images/email.svg') }}" alt="email svg">
+      <h3>SUBSCRIBE NOW</h3>
+      <p>Receive weekly updates directly to your inbox</p>
+    </a>
+  </div>
+
+  
+{% endblock content %}

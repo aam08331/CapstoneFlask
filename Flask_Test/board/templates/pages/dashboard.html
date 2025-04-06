@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h2 class="header red-text">{% block title %}Dashboard{% endblock title %}</h2>
+{% endblock header %}
+
+{% block content %}
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <p>Loading... Scraping data and fetching telemetry, please wait.</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div id="dashboard-content" style="display: none;">
+    <!-- Currents Chart -->
+    <h3>Currents (Ampere)</h3>
+    <canvas id="chartCurrents" width="600" height="400"></canvas>
+    <div id="checkboxes-currents" style="margin-top: 1em;">
+      <h4>Select Current Series:</h4>
+      <!-- dynamic checkboxes -->
+    </div>
+
+    <hr>
+
+    <!-- Temperatures Chart -->
+    <h3>Temperatures (°F)</h3>
+    <canvas id="chartTemperatures" width="600" height="400"></canvas>
+    <div id="checkboxes-temperatures" style="margin-top: 1em;">
+      <h4>Select Temperature Series:</h4>
+      <!-- dynamic checkboxes -->
+    </div>
+
+    <p id="no-data-message" style="display: none; color: red;">No telemetry data available.</p>
+  </div>
+
+  <!-- SCRIPT ORDER: Chart.js, then Luxon, then the adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+
+  <script>
+    // Global references to each chart + their datasets
+    let chartCurrents = null;
+    let chartTemperatures = null;
+    let currentDatasets = [];
+    let temperatureDatasets = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      startScrapeJob();
+    });
+
+    /**
+     * 1) Start the Selenium scraping job
+     */
+    async function startScrapeJob() {
+      console.log("Starting scrape job...");
+      try {
+        const response = await fetch("/start_scrape", { method: "POST" });
+        const data = await response.json();
+        console.log("Response from /start_scrape:", data);
+        if (data.job_id) {
+          pollScrapeStatus(data.job_id);
+        } else {
+          console.error("No job_id returned from /start_scrape");
+        }
+      } catch (err) {
+        console.error("Error starting scrape job:", err);
+      }
+    }
+
+    /**
+     * 2) Poll the job status until complete or error
+     */
+    async function pollScrapeStatus(jobId) {
+      console.log("Polling for job status with jobId:", jobId);
+      const intervalId = setInterval(async () => {
+        try {
+          const response = await fetch(`/scrape_status?job_id=${jobId}`);
+          const statusData = await response.json();
+          console.log("Poll response for job", jobId, ":", statusData);
+
+          if (statusData.error) {
+            document.getElementById("loading-screen").innerHTML =
+              `<p style="color:red;">Error: ${statusData.error}</p>`;
+            clearInterval(intervalId);
+          } else if (statusData.status === "complete") {
+            clearInterval(intervalId);
+            document.getElementById("loading-screen").style.display = "none";
+            document.getElementById("dashboard-content").style.display = "block";
+
+            if (statusData.result && statusData.result.telemetry_data) {
+              console.log("Final telemetry_data received:", statusData.result.telemetry_data);
+              processTelemetryData(statusData.result.telemetry_data);
+            } else {
+              console.error("Job complete, but no telemetry_data in result:", statusData.result);
+              document.getElementById("no-data-message").style.display = "block";
+            }
+          }
+        } catch (err) {
+          console.error("Error polling /scrape_status:", err);
+          clearInterval(intervalId);
+        }
+      }, 3000);
+    }
+
+    /**
+     * 3) Process the telemetry data:
+     *    - Parse endpoints, removing duplicates
+     *    - Partition into "currents" vs. "temperatures"
+     *    - Render two separate charts
+     */
+    function processTelemetryData(telemetryData) {
+      const allEndpoints = telemetryData;
+      console.log("Merged endpoints:", allEndpoints);
+
+      // parse and remove duplicates
+      const seriesData = parseAllEndpointsNoDuplicates(allEndpoints);
+      console.log("Parsed series data (no duplicates):", seriesData);
+
+      if (Object.keys(seriesData).length === 0) {
+        document.getElementById("no-data-message").style.display = "block";
+        return;
+      }
+
+      // Partition: anything with "ampere" => current, anything with "pdi" => temperature
+      const currents = {};
+      const temperatures = {};
+      for (const key in seriesData) {
+        const lower = key.toLowerCase();
+        if (lower.includes("ampere")) {
+          currents[key] = seriesData[key];
+        } else if (lower.includes("pdi")) {
+          temperatures[key] = seriesData[key];
+        }
+      }
+
+      console.log("Currents series:", currents);
+      console.log("Temperatures series:", temperatures);
+
+      // Render or show "no data" for each
+      if (Object.keys(currents).length > 0) {
+        renderChart(currents, "chartCurrents", "currents");
+      } else {
+        document.getElementById("chartCurrents").outerHTML = "<p>No current data available.</p>";
+      }
+
+      if (Object.keys(temperatures).length > 0) {
+        renderChart(temperatures, "chartTemperatures", "temperatures");
+      } else {
+        document.getElementById("chartTemperatures").outerHTML = "<p>No temperature data available.</p>";
+      }
+    }
+
+    /**
+     * 4) Render a chart for either "currents" or "temperatures"
+     *    - For currents: divide values by 100, rename series properly
+     *    - For temperatures: divide values by 10, skip all-zero series, rename as "Temperature (°F)"
+     */
+    function renderChart(dataObject, canvasId, typeStr) {
+      const datasets = [];
+
+      for (const seriesName in dataObject) {
+        let dataPoints = dataObject[seriesName];
+
+        if (typeStr === "currents") {
+          // scale each point by 1/100
+          dataPoints = dataPoints.map(pt => ({ x: pt.x, y: pt.y / 100 }));
+          // rename based on "ampere_1", "ampere_2", "ampere_3"
+          const lower = seriesName.toLowerCase();
+          let newLabel;
+          if (lower.includes("ampere_1")) {
+            newLabel = "Traffic Controller Current (A)";
+          } else if (lower.includes("ampere_2")) {
+            newLabel = "Total Current (A)";
+          } else if (lower.includes("ampere_3")) {
+            newLabel = "Auxiliary Current (A)";
+          } else {
+            // fallback if there's an odd naming pattern
+            newLabel = seriesName + " (A)";
+          }
+          datasets.push({
+            label: newLabel,
+            data: dataPoints,
+            borderWidth: 2,
+            fill: false,
+            hidden: false
+          });
+
+        } else if (typeStr === "temperatures") {
+          // scale each point by 1/10
+          dataPoints = dataPoints.map(pt => ({ x: pt.x, y: pt.y / 10 }));
+
+          // Check if this entire series is zero. If so, skip it
+          const anyNonZero = dataPoints.some(pt => pt.y !== 0);
+          if (!anyNonZero) {
+            console.log(`Skipping temperature series "${seriesName}" because all points are zero.`);
+            continue;
+          }
+
+          // We label all temperature lines the same
+          datasets.push({
+            label: "Temperature (°F)",
+            data: dataPoints,
+            borderWidth: 2,
+            fill: false,
+            hidden: false
+          });
+
+        } else {
+          // fallback if needed
+          datasets.push({
+            label: seriesName,
+            data: dataPoints,
+            borderWidth: 2,
+            fill: false,
+            hidden: false
+          });
+        }
+      }
+
+      // If no valid datasets remain, show a "no data" message
+      if (datasets.length === 0) {
+        document.getElementById(canvasId).outerHTML = `<p>No data available for ${typeStr}.</p>`;
+        return;
+      }
+
+      // Destroy existing chart if it exists
+      if ((typeStr === "currents" && chartCurrents) ||
+          (typeStr === "temperatures" && chartTemperatures)) {
+        if (typeStr === "currents") chartCurrents.destroy();
+        if (typeStr === "temperatures") chartTemperatures.destroy();
+      }
+
+      // Create new chart
+      const ctx = document.getElementById(canvasId).getContext("2d");
+      const chartInstance = new Chart(ctx, {
+        type: "line",
+        data: { datasets },
+        options: {
+          scales: {
+            x: {
+              type: "time",
+              time: {
+                tooltipFormat: "ll HH:mm",
+                displayFormats: { hour: 'MMM d, hA' }
+              },
+              title: {
+                display: true,
+                text: "Timestamp"
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: (typeStr === "currents") ? "Current (A)" : "Temperature (°F)"
+              }
+            }
+          }
+        }
+      });
+
+      // Store chart + build checkboxes
+      if (typeStr === "currents") {
+        chartCurrents = chartInstance;
+        currentDatasets = datasets;
+        buildCheckboxesForDatasets(datasets, "checkboxes-currents", chartInstance);
+      } else {
+        chartTemperatures = chartInstance;
+        temperatureDatasets = datasets;
+        buildCheckboxesForDatasets(datasets, "checkboxes-temperatures", chartInstance);
+      }
+    }
+
+    /**
+     * 5) Parse endpoints, removing duplicates by item name
+     */
+    function parseAllEndpointsNoDuplicates(endpoints) {
+      const seriesData = {};
+      const usedNames = new Set();
+
+      for (const url in endpoints) {
+        const apiResponse = endpoints[url];
+        if (!apiResponse) continue;
+
+        let topLevelItems = [];
+        if (Array.isArray(apiResponse)) {
+          topLevelItems = apiResponse;
+        } else if (apiResponse.items && Array.isArray(apiResponse.items)) {
+          topLevelItems = apiResponse.items;
+        } else {
+          continue;
+        }
+
+        topLevelItems.forEach(item => {
+          const itemName = item.name || "UnknownItem";
+          if (usedNames.has(itemName)) return; // skip duplicates
+          usedNames.add(itemName);
+
+          if (!item.items || !Array.isArray(item.items)) return;
+
+          // build data points
+          const dataPoints = item.items.map(dp => {
+            const val = parseFloat(dp.average);
+            const dateObj = dp.timestamp ? new Date(dp.timestamp) : null;
+            if (!dateObj || isNaN(val)) return null;
+            return { x: dateObj, y: val };
+          }).filter(pt => pt !== null);
+
+          dataPoints.sort((a, b) => a.x - b.x);
+
+          if (dataPoints.length > 0) {
+            seriesData[itemName] = dataPoints;
+          }
+        });
+      }
+
+      return seriesData;
+    }
+
+    /**
+     * 6) Build dynamic checkboxes for toggling lines
+     */
+    function buildCheckboxesForDatasets(datasets, containerId, chartInstance) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+
+      datasets.forEach((ds, index) => {
+        const label = document.createElement("label");
+        label.style.display = "block";
+        label.style.marginBottom = "4px";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = !ds.hidden;
+        checkbox.dataset.index = index;
+        checkbox.onchange = (e) => {
+          const idx = parseInt(e.target.dataset.index, 10);
+          chartInstance.setDatasetVisibility(idx, e.target.checked);
+          chartInstance.update();
+        };
+
+        const text = document.createTextNode(" " + ds.label);
+        label.appendChild(checkbox);
+        label.appendChild(text);
+        container.appendChild(label);
+      });
+    }
+  </script>
+{% endblock content %}

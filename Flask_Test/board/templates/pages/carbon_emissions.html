@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Carbon Emissions{% endblock %}
+
+{% block header %}
+<h2 class="header">
+  <span class="red-text">CARBON</span> EMISSIONS
+</h2>
+{% endblock header %}
+
+{% block content %}
+<hr>
+
+<!-- First Section: What are Carbon Emissions -->
+<section class="carbon-section">
+  <h3 class="carbon-section-title">What are Carbon Emissions?</h3>
+  <p>
+    According to the <strong>U.S. Environmental Protection Agency (EPA)</strong>, carbon emissions refer to the release of carbon dioxide (CO₂) 
+    into the atmosphere, primarily from burning fossil fuels like coal, oil, and natural gas.
+    In 2022, CO₂ accounted for 80% of all U.S. greenhouse gas emissions from human activities.
+  </p>
+</section>
+
+<!-- Second Section: Chart -->
+<section class="carbon-section">
+  <h3 class="carbon-section-title">CO₂ Emissions Over Time</h3>
+  <div id="co2-emissions-chart" class="chart-placeholder">
+    <em>[Chart placeholder]</em>
+  </div>
+</section>
+
+<!-- Third Section: More Details -->
+<div class="carbon-container responsive-split">
+ 
+  <section class="carbon-section">
+    <h3 class="carbon-section-title">How are Carbon Emissions Calculated?</h3>
+    <p>We use the following formula to estimate emissions:</p>
+    <p class="formula">Carbon Emissions (lbs CO₂) = Emission Factor × Conversion (Tons to Pounds) × Energy Consumption (kWh)</p>
+    
+    <ul class="no-bullets">
+      <li><strong>Emission Factor:</strong> Based on Georgia's regional electricity mix = 3.94 × 10<sup>-4</sup></li>
+      <li><strong>Conversion (Tons to Pounds):</strong> 2000 </li>
+      <li><strong>Energy Consumption:</strong> From sensor data (measured in kWh)</li>
+      <li><strong>Location:</strong> Peachtree Corners, 30092</li>
+    </ul>
+  </section>
+  
+
+  <div class="carbon-right">
+    <section class="carbon-section">
+      <h3 class="carbon-section-title">What is this equivalent to?</h3>
+      <section class="equivalent-section">
+      
+        <div class="equivalent-grid">
+          <div class="equiv-box">
+          
+            <div class="equiv-icon">🚗</div>
+            <div class="equiv-number">XX</div>
+            
+            <div class="equiv-desc">Cars on the road</div>
+          </div>
+      
+          <div class="equiv-box">
+            <div class="equiv-icon">🌳</div>
+            <div class="equiv-number">XX</div>
+            
+            <div class="equiv-desc">Trees needed to offset</div>
+          </div>
+      
+          <div class="equiv-box">
+            <div class="equiv-icon">🎈</div>
+            <div class="equiv-number">XX</div>
+            
+            <div class="equiv-desc">Balloons filled with CO₂</div>
+          </div>
+      
+          <div class="equiv-box">
+            <div class="equiv-icon">🚿</div>
+            <div class="equiv-number">XX</div>
+            
+            <div class="equiv-desc">Showers taken</div>
+          </div>
+        </div>
+      </section>
+      
+    </section>
+  
+</div>
+
+{% endblock content %}
+
