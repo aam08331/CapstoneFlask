@@ -1,5 +1,0 @@
-providers = ["python"]
-
-[start]
-cmd = "pip install -r requirements.txt && python -m flask --app board run"
-
